@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="form1/form1.csproj" />
+  <Project Path="Telinha/Telinha.csproj" />
+</Solution>
