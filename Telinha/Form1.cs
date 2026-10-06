@@ -1,5 +1,4 @@
 using MySql.Data.MySqlClient;
-using MySql.Data;
 using System.Data;
 
 namespace Telinha
@@ -8,37 +7,42 @@ namespace Telinha
     {
         public int id = 0;
         public string conexao = "server=localhost;database=CadastroPessoal;uid=root;pwd=;";
+
         public Form1()
         {
             InitializeComponent();
+
+            dtpDataNascimento.Format = DateTimePickerFormat.Custom;
+            dtpDataNascimento.CustomFormat = "dd/MM/yyyy";
+
             BuscarDados("");
-        }
-
-        private void label1_Click(object sender, EventArgs e)
-        {
-
         }
 
         private bool ValidarCampos()
         {
             if (string.IsNullOrWhiteSpace(txtNome.Text))
             {
-                MessageBox.Show("Por favor, preencha o Nome!", "Validação", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(
+                    "Por favor, preencha o Nome!",
+                    "Validação",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+
                 txtNome.Focus();
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(txtIdade.Text) || !int.TryParse(txtIdade.Text, out int idade) || idade < 0 || idade > 150)
+            if (!int.TryParse(txtIdade.Text.Trim(), out int idade) || idade < 0 || idade > 150)
             {
-                MessageBox.Show("Por favor, preencha a Idade corretamente (0-150)!", "Validação", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtIdade.Focus();
-                return false;
-            }
+                MessageBox.Show(
+                    "Por favor, informe uma idade válida entre 0 e 150!",
+                    "Validação",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
 
-            if (string.IsNullOrWhiteSpace(txtDataNascimento.Text) || !DateTime.TryParse(txtDataNascimento.Text, out _))
-            {
-                MessageBox.Show("Por favor, preencha a Data de Nascimento corretamente (DD/MM/YYYY)!", "Validação", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtDataNascimento.Focus();
+                txtIdade.Focus();
                 return false;
             }
 
@@ -50,57 +54,80 @@ namespace Telinha
             if (!ValidarCampos())
                 return;
 
-            string query = "";
-            string mensagem = "";
+            string query;
+            string mensagem;
 
             if (id == 0)
             {
-                query = "INSERT INTO dados(nome, dataNascimento, idade) VALUES" +
-                    " (@nome, @dataNascimento, @idade)";
+                query = @"INSERT INTO dados
+                          (nome, dataNascimento, idade)
+                          VALUES
+                          (@nome, @dataNascimento, @idade)";
+
                 mensagem = "Cadastro";
             }
             else
             {
-                query = "UPDATE dados SET nome = @nome, idade = @idade, dataNascimento = @dataNascimento WHERE id = @id";
-                mensagem = "Dados";
+                query = @"UPDATE dados
+                          SET nome = @nome,
+                              dataNascimento = @dataNascimento,
+                              idade = @idade
+                          WHERE id = @id";
+
+                mensagem = "Atualização";
             }
 
-            using (MySqlConnection conexaoBD = new MySqlConnection(conexao))
+            try
             {
+                using (MySqlConnection conexaoBD = new MySqlConnection(conexao))
                 using (MySqlCommand cmd = new MySqlCommand(query, conexaoBD))
                 {
-                    try
+                    cmd.Parameters.Add("@nome", MySqlDbType.VarChar).Value =
+                        txtNome.Text.Trim();
+
+                    cmd.Parameters.Add("@dataNascimento", MySqlDbType.Date).Value =
+                        dtpDataNascimento.Value.Date;
+
+                    cmd.Parameters.Add("@idade", MySqlDbType.Int32).Value =
+                        int.Parse(txtIdade.Text.Trim());
+
+                    if (id != 0)
                     {
-                        DateTime d = DateTime.Parse(txtDataNascimento.Text);
-                        cmd.Parameters.AddWithValue("@nome", txtNome.Text);
-                        cmd.Parameters.AddWithValue("@dataNascimento", d);
-                        cmd.Parameters.AddWithValue("@idade", int.Parse(txtIdade.Text));
-
-                        if (id != 0)
-                        {
-                            cmd.Parameters.AddWithValue("@id", id);
-                        }
-
-                        conexaoBD.Open();
-                        cmd.ExecuteNonQuery();
-                        conexaoBD.Close();
-
-                        MessageBox.Show(
-                            $"{mensagem} realizado com sucesso!",
-                            "Sucesso",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information
-                        );
-
-                        LimparCampos();
-                        id = 0;
-                        BuscarDados("");
+                        cmd.Parameters.Add("@id", MySqlDbType.Int32).Value = id;
                     }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Erro ao salvar: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+
+                    conexaoBD.Open();
+                    cmd.ExecuteNonQuery();
+
+                    MessageBox.Show(
+                        $"{mensagem} realizado com sucesso!",
+                        "Sucesso",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
+
+                    LimparCampos();
+                    id = 0;
+                    BuscarDados("");
                 }
+            }
+            catch (MySqlException ex)
+            {
+                MessageBox.Show(
+                    "Erro no banco de dados:\n\n" + ex.Message,
+                    "Erro MySQL",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Erro ao salvar:\n\n" + ex.Message,
+                    "Erro",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
             }
         }
 
@@ -108,32 +135,56 @@ namespace Telinha
         {
             txtNome.Clear();
             txtIdade.Clear();
-            txtDataNascimento.Clear();
+            dtpDataNascimento.Value = DateTime.Today;
         }
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0)
+            if (e.RowIndex < 0)
+                return;
+
+            try
             {
-                id = (int)dataGridView1.Rows[e.RowIndex].Cells[0].Value;
-                txtNome.Text = dataGridView1.Rows[e.RowIndex].Cells[1].Value.ToString();
-                txtDataNascimento.Text = dataGridView1.Rows[e.RowIndex].Cells[2].Value.ToString();
-                txtIdade.Text = dataGridView1.Rows[e.RowIndex].Cells[3].Value.ToString();
+                id = Convert.ToInt32(
+                    dataGridView1.Rows[e.RowIndex].Cells[0].Value
+                );
+
+                txtNome.Text = Convert.ToString(
+                    dataGridView1.Rows[e.RowIndex].Cells[1].Value
+                );
+
+                if (DateTime.TryParse(
+                    Convert.ToString(dataGridView1.Rows[e.RowIndex].Cells[2].Value),
+                    out DateTime dataNascimento))
+                {
+                    dtpDataNascimento.Value = dataNascimento;
+                }
+
+                txtIdade.Text = Convert.ToString(
+                    dataGridView1.Rows[e.RowIndex].Cells[3].Value
+                );
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Erro ao selecionar o registro:\n\n" + ex.Message,
+                    "Erro",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
             }
         }
 
         private void btnPesquisar_Click(object sender, EventArgs e)
         {
-            string busca = txtBuscar.Text;
-
-            BuscarDados(busca);
+            BuscarDados(txtBuscar.Text.Trim());
         }
 
         public void BuscarDados(string busca)
         {
             string queryPesquisa;
 
-            if (string.IsNullOrEmpty(busca))
+            if (string.IsNullOrWhiteSpace(busca))
             {
                 queryPesquisa = "SELECT * FROM dados";
             }
@@ -142,90 +193,118 @@ namespace Telinha
                 queryPesquisa = "SELECT * FROM dados WHERE nome LIKE @busca";
             }
 
-            using (MySqlConnection conexaoBD = new MySqlConnection(conexao))
+            try
             {
-                try
+                using (MySqlConnection conexaoBD = new MySqlConnection(conexao))
+                using (MySqlCommand cmd = new MySqlCommand(queryPesquisa, conexaoBD))
                 {
-                    conexaoBD.Open();
-                    using (MySqlCommand cmd = new MySqlCommand(queryPesquisa, conexaoBD))
+                    if (!string.IsNullOrWhiteSpace(busca))
                     {
-                        if (!string.IsNullOrEmpty(busca))
-                        {
-                            cmd.Parameters.AddWithValue("@busca", "%" + busca + "%");
-                        }
+                        cmd.Parameters.Add("@busca", MySqlDbType.VarChar).Value =
+                            "%" + busca + "%";
+                    }
 
-                        try
-                        {
-                            using (MySqlDataAdapter selectao = new MySqlDataAdapter(cmd))
-                            {
-                                DataTable tabelagrid = new DataTable();
-                                selectao.Fill(tabelagrid);
-                                dataGridView1.DataSource = tabelagrid;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("Ocorreu um erro: " + ex.Message);
-                        }
+                    using (MySqlDataAdapter selecao = new MySqlDataAdapter(cmd))
+                    {
+                        DataTable tabelaGrid = new DataTable();
+
+                        selecao.Fill(tabelaGrid);
+
+                        dataGridView1.DataSource = tabelaGrid;
                     }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Erro ao pesquisar: " + ex.Message);
-                }
             }
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-
+            catch (MySqlException ex)
+            {
+                MessageBox.Show(
+                    "Erro ao pesquisar no banco de dados:\n\n" + ex.Message,
+                    "Erro MySQL",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Erro ao pesquisar:\n\n" + ex.Message,
+                    "Erro",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            }
         }
 
         private void btnEditar_Click(object sender, EventArgs e)
         {
             if (id == 0)
             {
-                MessageBox.Show("Selecione um registro na tabela para editar!", "Informação", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(
+                    "Selecione um registro na tabela antes de editar!",
+                    "Informação",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
+
                 return;
             }
 
             if (!ValidarCampos())
                 return;
 
-            string query = "UPDATE dados SET nome = @nome, idade = @idade, dataNascimento = @dataNascimento WHERE id = @id";
+            string query = @"UPDATE dados
+                             SET nome = @nome,
+                                 idade = @idade,
+                                 dataNascimento = @dataNascimento
+                             WHERE id = @id";
 
-            using (MySqlConnection conexaoBD = new MySqlConnection(conexao))
+            try
             {
+                using (MySqlConnection conexaoBD = new MySqlConnection(conexao))
                 using (MySqlCommand cmd = new MySqlCommand(query, conexaoBD))
                 {
-                    try
-                    {
-                        DateTime d = DateTime.Parse(txtDataNascimento.Text);
-                        cmd.Parameters.AddWithValue("@nome", txtNome.Text);
-                        cmd.Parameters.AddWithValue("@dataNascimento", d);
-                        cmd.Parameters.AddWithValue("@idade", int.Parse(txtIdade.Text));
-                        cmd.Parameters.AddWithValue("@id", id);
+                    cmd.Parameters.Add("@nome", MySqlDbType.VarChar).Value =
+                        txtNome.Text.Trim();
 
-                        conexaoBD.Open();
-                        cmd.ExecuteNonQuery();
-                        conexaoBD.Close();
+                    cmd.Parameters.Add("@idade", MySqlDbType.Int32).Value =
+                        int.Parse(txtIdade.Text.Trim());
 
-                        MessageBox.Show(
-                            "Registro atualizado com sucesso!",
-                            "Sucesso",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information
-                        );
+                    cmd.Parameters.Add("@dataNascimento", MySqlDbType.Date).Value =
+                        dtpDataNascimento.Value.Date;
 
-                        LimparCampos();
-                        id = 0;
-                        BuscarDados("");
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Erro ao editar: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    cmd.Parameters.Add("@id", MySqlDbType.Int32).Value = id;
+
+                    conexaoBD.Open();
+                    cmd.ExecuteNonQuery();
+
+                    MessageBox.Show(
+                        "Registro atualizado com sucesso!",
+                        "Sucesso",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
+
+                    LimparCampos();
+                    id = 0;
+                    BuscarDados("");
                 }
+            }
+            catch (MySqlException ex)
+            {
+                MessageBox.Show(
+                    "Erro no banco de dados:\n\n" + ex.Message,
+                    "Erro MySQL",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Erro ao atualizar:\n\n" + ex.Message,
+                    "Erro",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
             }
         }
 
@@ -233,7 +312,13 @@ namespace Telinha
         {
             if (id == 0)
             {
-                MessageBox.Show("Selecione um registro na tabela para excluir!", "Informação", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(
+                    "Selecione um registro na tabela para excluir!",
+                    "Informação",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
+
                 return;
             }
 
@@ -249,34 +334,45 @@ namespace Telinha
 
             string query = "DELETE FROM dados WHERE id = @id";
 
-            using (MySqlConnection conexaoBD = new MySqlConnection(conexao))
+            try
             {
+                using (MySqlConnection conexaoBD = new MySqlConnection(conexao))
                 using (MySqlCommand cmd = new MySqlCommand(query, conexaoBD))
                 {
-                    try
-                    {
-                        cmd.Parameters.AddWithValue("@id", id);
+                    cmd.Parameters.Add("@id", MySqlDbType.Int32).Value = id;
 
-                        conexaoBD.Open();
-                        cmd.ExecuteNonQuery();
-                        conexaoBD.Close();
+                    conexaoBD.Open();
+                    cmd.ExecuteNonQuery();
 
-                        MessageBox.Show(
-                            "Registro deletado com sucesso!",
-                            "Sucesso",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information
-                        );
+                    MessageBox.Show(
+                        "Registro deletado com sucesso!",
+                        "Sucesso",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
 
-                        LimparCampos();
-                        id = 0;
-                        BuscarDados("");
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Erro ao deletar: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    LimparCampos();
+                    id = 0;
+                    BuscarDados("");
                 }
+            }
+            catch (MySqlException ex)
+            {
+                MessageBox.Show(
+                    "Erro no banco de dados:\n\n" + ex.Message,
+                    "Erro MySQL",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Erro ao deletar:\n\n" + ex.Message,
+                    "Erro",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
             }
         }
 
@@ -285,6 +381,20 @@ namespace Telinha
             LimparCampos();
             id = 0;
             BuscarDados("");
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            dtpDataNascimento.Format = DateTimePickerFormat.Custom;
+            dtpDataNascimento.CustomFormat = "dd/MM/yyyy";
         }
     }
 }

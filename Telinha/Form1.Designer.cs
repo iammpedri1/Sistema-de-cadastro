@@ -30,7 +30,6 @@
         {
             txtNome = new TextBox();
             txtIdade = new TextBox();
-            txtDataNascimento = new MaskedTextBox();
             lblNome = new Label();
             lblIdade = new Label();
             lblNasci = new Label();
@@ -42,6 +41,7 @@
             btnEditar = new Button();
             btnExcluir = new Button();
             btnCancelar = new Button();
+            dtpDataNascimento = new DateTimePicker();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -50,25 +50,15 @@
             txtNome.Location = new Point(28, 305);
             txtNome.Name = "txtNome";
             txtNome.PlaceholderText = "Digite seu nome";
-            txtNome.Size = new Size(207, 23);
+            txtNome.Size = new Size(250, 23);
             txtNome.TabIndex = 0;
             // 
             // txtIdade
             // 
-            txtIdade.Location = new Point(275, 305);
+            txtIdade.Location = new Point(308, 305);
             txtIdade.Name = "txtIdade";
             txtIdade.Size = new Size(54, 23);
             txtIdade.TabIndex = 1;
-            // 
-            // txtDataNascimento
-            // 
-            txtDataNascimento.ImeMode = ImeMode.NoControl;
-            txtDataNascimento.Location = new Point(385, 305);
-            txtDataNascimento.Mask = "00/00/0000";
-            txtDataNascimento.Name = "txtDataNascimento";
-            txtDataNascimento.Size = new Size(72, 23);
-            txtDataNascimento.TabIndex = 2;
-            txtDataNascimento.ValidatingType = typeof(DateTime);
             // 
             // lblNome
             // 
@@ -85,7 +75,7 @@
             // 
             lblIdade.AutoSize = true;
             lblIdade.Font = new Font("Verdana", 11.25F, FontStyle.Bold);
-            lblIdade.Location = new Point(275, 266);
+            lblIdade.Location = new Point(306, 266);
             lblIdade.Name = "lblIdade";
             lblIdade.Size = new Size(56, 18);
             lblIdade.TabIndex = 4;
@@ -95,7 +85,7 @@
             // 
             lblNasci.AutoSize = true;
             lblNasci.Font = new Font("Verdana", 11.25F, FontStyle.Bold);
-            lblNasci.Location = new Point(385, 266);
+            lblNasci.Location = new Point(400, 266);
             lblNasci.Name = "lblNasci";
             lblNasci.Size = new Size(173, 18);
             lblNasci.TabIndex = 5;
@@ -104,9 +94,10 @@
             // btnSalva
             // 
             btnSalva.BackColor = Color.FromArgb(0, 150, 0);
+            btnSalva.FlatStyle = FlatStyle.Flat;
             btnSalva.Font = new Font("Segoe UI", 11F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btnSalva.ForeColor = Color.White;
-            btnSalva.Location = new Point(28, 390);
+            btnSalva.Location = new Point(28, 360);
             btnSalva.Name = "btnSalva";
             btnSalva.Size = new Size(110, 40);
             btnSalva.TabIndex = 6;
@@ -119,7 +110,7 @@
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dataGridView1.Location = new Point(12, 84);
             dataGridView1.Name = "dataGridView1";
-            dataGridView1.Size = new Size(644, 150);
+            dataGridView1.Size = new Size(731, 150);
             dataGridView1.TabIndex = 7;
             dataGridView1.CellContentClick += dataGridView1_CellContentClick;
             // 
@@ -156,10 +147,11 @@
             // 
             // btnEditar
             // 
-            btnEditar.BackColor = Color.FromArgb(255, 140, 0);
+            btnEditar.BackColor = Color.Orange;
+            btnEditar.FlatStyle = FlatStyle.Flat;
             btnEditar.Font = new Font("Segoe UI", 11F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnEditar.ForeColor = Color.White;
-            btnEditar.Location = new Point(149, 390);
+            btnEditar.ForeColor = SystemColors.Window;
+            btnEditar.Location = new Point(168, 360);
             btnEditar.Name = "btnEditar";
             btnEditar.Size = new Size(110, 40);
             btnEditar.TabIndex = 11;
@@ -172,7 +164,7 @@
             btnExcluir.BackColor = Color.FromArgb(192, 0, 0);
             btnExcluir.Font = new Font("Segoe UI", 11F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btnExcluir.ForeColor = Color.White;
-            btnExcluir.Location = new Point(270, 390);
+            btnExcluir.Location = new Point(308, 360);
             btnExcluir.Name = "btnExcluir";
             btnExcluir.Size = new Size(110, 40);
             btnExcluir.TabIndex = 12;
@@ -185,7 +177,7 @@
             btnCancelar.BackColor = Color.FromArgb(128, 128, 128);
             btnCancelar.Font = new Font("Segoe UI", 11F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btnCancelar.ForeColor = Color.White;
-            btnCancelar.Location = new Point(391, 390);
+            btnCancelar.Location = new Point(444, 360);
             btnCancelar.Name = "btnCancelar";
             btnCancelar.Size = new Size(110, 40);
             btnCancelar.TabIndex = 13;
@@ -193,12 +185,20 @@
             btnCancelar.UseVisualStyleBackColor = false;
             btnCancelar.Click += btnCancelar_Click;
             // 
+            // dtpDataNascimento
+            // 
+            dtpDataNascimento.Location = new Point(400, 305);
+            dtpDataNascimento.Name = "dtpDataNascimento";
+            dtpDataNascimento.Size = new Size(230, 23);
+            dtpDataNascimento.TabIndex = 14;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.White;
-            ClientSize = new Size(668, 458);
+            ClientSize = new Size(755, 427);
+            Controls.Add(dtpDataNascimento);
             Controls.Add(btnCancelar);
             Controls.Add(btnExcluir);
             Controls.Add(btnEditar);
@@ -210,11 +210,11 @@
             Controls.Add(lblNasci);
             Controls.Add(lblIdade);
             Controls.Add(lblNome);
-            Controls.Add(txtDataNascimento);
             Controls.Add(txtIdade);
             Controls.Add(txtNome);
             Name = "Form1";
             Text = "Sistema de Cadastro - Pessoal";
+            Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
             PerformLayout();
@@ -224,7 +224,6 @@
 
         private TextBox txtNome;
         private TextBox txtIdade;
-        private MaskedTextBox txtDataNascimento;
         private Label lblNome;
         private Label lblIdade;
         private Label lblNasci;
@@ -236,5 +235,6 @@
         private Button btnEditar;
         private Button btnExcluir;
         private Button btnCancelar;
+        private DateTimePicker dtpDataNascimento;
     }
 }
